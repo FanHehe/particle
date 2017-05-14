@@ -27,8 +27,8 @@ Particle.prototype.init = function () {
 
 }
 Particle.prototype.initParticles = function () {
-	this.particles.p = new THREE.GPUParticleSystem({ maxParticles: 250000 });
-	this.scene.add(this.particles.p);
+	this.particles.p = new THREE.ParticleSystem({ maxParticles: 250000 });
+	console.log(this.particles.p.spawnParticle, 'ssss');
 	var options = this.particles.options = {
 		position: new THREE.Vector3(),
 		positionRandomness: .3,
@@ -63,23 +63,23 @@ Particle.prototype.initParticles = function () {
 }
 
 Particle.prototype.initRenderer = function () {
-	//生成渲染器的对象
-	this.renderer = new THREE.WebGLRenderer();
+//生成渲染器的对象
+this.renderer = new THREE.WebGLRenderer();
 }
 
 Particle.prototype.initScene = function () {
-	//声明场景
-	this.scene = new THREE.Scene();
-	//将相机装加载到场景
-	this.scene.add(this.camera);
+//声明场景
+this.scene = new THREE.Scene();
+//将相机装加载到场景
+this.scene.add(this.camera);
 }
 
 Particle.prototype.initCamera = function () {
-	//四个参数值分别代表:视野角：fov  纵横比：aspect 相机离视体最近的距离：near 相机离视体最远的距离：far
-	this.camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 4000);
-	//设置相机位置,默认位置为:0,0,0.
-	this.camera.position.z = 100;
-	// this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+//四个参数值分别代表:视野角：fov  纵横比：aspect 相机离视体最近的距离：near 相机离视体最远的距离：far
+this.camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 4000);
+//设置相机位置,默认位置为:0,0,0.
+this.camera.position.z = 1000;
+this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 }
 
 Particle.prototype.initLight = function () {
@@ -94,9 +94,9 @@ Particle.prototype.initLight = function () {
 	this.light.shadow.camera.bottom = -300;
 	this.light.shadow.camera = true;
 	this.scene.add(this.light);
-	// var geom = new THREE.CubeGeometry(800, 200, 200);
-	// var box = new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: 0xffffff }));
-	// this.scene.add(box);
+	var geom = new THREE.CubeGeometry(800, 200, 200);
+	var box = new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+	this.scene.add(box);
 }
 
 Particle.prototype.insertInto = function (container) {
@@ -104,16 +104,10 @@ Particle.prototype.insertInto = function (container) {
 	if (!container) return console.log('插入失败');
 	this.container = container;
 	this.autoSize();
-	this.container.appendChild(this.renderer.domElement);
-	this.container.appendChild(this.stat.dom);
-
-	// this.control initial
 	this.control = new THREE.TrackballControls(this.camera, this.renderer.domElement);
 	this.control.addEventListener('change', this.render.bind(this));
-	this.control.rotateSpeed = 5.0;
-	this.control.zoomSpeed = 2.2;
-	this.control.panSpeed = 1;
-	this.control.dynamicDampingFactor = 0.3;
+	this.container.appendChild(this.renderer.domElement);
+	this.container.appendChild(this.stat.dom);
 	this.animate();
 }
 
@@ -140,26 +134,25 @@ Particle.prototype.compute = function () {
 	var options = this.particles.options;
 	var spawnerOptions = this.particles.spawnerOptions;
 
-	var delta = this.clock.getDelta() * spawnerOptions.timeScale;
+	var delta = this.clock.getDelta() * this.particles.spawnerOptions.timeScale;
 	this.tick += delta;
 	if (this.tick < 0) this.tick = 0;
 	var tick = this.tick;
-	if (delta > 0) {
+	if (delta > 0 ) {
 		options.position.x = Math.sin( tick * spawnerOptions.horizontalSpeed ) * 20;
 		options.position.y = Math.sin( tick * spawnerOptions.verticalSpeed ) * 10;
 		options.position.z = Math.sin( tick * spawnerOptions.horizontalSpeed + spawnerOptions.verticalSpeed ) * 5;
 
-		for (var x = 0; x < spawnerOptions.spawnRate * delta; x++) {
+		for ( var x = 0; x < spawnerOptions.spawnRate * delta; x++ ) {
 			this.particles.p.spawnParticle(options);
 		}
 	}
 	this.particles.p.update(tick);
 }
 Particle.prototype.animate = function () {
-	this.compute();
-	this.render();
-	if (this.stat) this.stat.update();
 	if (this.control) this.control.update();
-	
+	if (this.renderer) this.renderer.render(this.scene, this.camera);
+	if (this.stat) this.stat.update();
+	this.compute();
 	requestAnimationFrame(this.animate.bind(this));
 }
